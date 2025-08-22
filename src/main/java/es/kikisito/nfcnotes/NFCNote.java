@@ -57,44 +57,56 @@ public class NFCNote {
 
     public Double getValue(){ return this.value; }
 
-    public static ItemStack createNFCNoteItem(String identifier, String name, List<String> lore, String material, String playername, DecimalFormat decimalFormat, Double money, Integer amount){
+    public static ItemStack[] createNFCNoteItem(String identifier, String name, List<String> lore, String material, String playername, DecimalFormat decimalFormat, Double money, Integer amount) {
         // Note value as string
         String formattedMoney = decimalFormat.format(money);
 
-        // Note item
-        ItemStack is = new ItemStack(Material.valueOf(material.toUpperCase()), amount);
-        ItemMeta im = is.getItemMeta();
+        Material mat = Material.valueOf(material.toUpperCase());
+        int maxStackSize = mat.getMaxStackSize();
 
-        // Note display name
-        im.setDisplayName(Utils.parseMessage(name).replace("{money}", formattedMoney).replace("{issuer}", playername));
+        List<ItemStack> stacks = new ArrayList<>();
+        int remaining = amount;
+        while (remaining > 0) {
+            int stackSize = Math.min(remaining, maxStackSize);
+            ItemStack is = new ItemStack(mat, stackSize);
+            ItemMeta im = is.getItemMeta();
 
-        // Parse lore
-        List<String> loreList = new ArrayList<>();
-        for(String s : lore) loreList.add(Utils.parseMessage(s).replace("{money}", formattedMoney).replace("{issuer}", playername));
-        im.setLore(loreList);
+            // Note display name
+            im.setDisplayName(Utils.parseMessage(name).replace("{money}", formattedMoney).replace("{issuer}", playername));
 
-        // Note value is stored as an Attribute, and then it's hidden, so its name and lore can be safely edited or removed
-        im.addAttributeModifier(Attribute.GENERIC_LUCK, new AttributeModifier(UUID.fromString(identifier), "noteValue", money, AttributeModifier.Operation.ADD_NUMBER));
-        im.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-
-        // Glint
-        if(NFCConfig.NOTE_GLINT_ENABLED.getBoolean()){
-            Enchantment enchant = Enchantment.getByKey(NamespacedKey.minecraft(NFCConfig.NOTE_GLINT_ENCHANTMENT.getString().toLowerCase()));
-            int enchantLevel = NFCConfig.NOTE_GLINT_ENCHANTMENT_LEVEL.getInt();
-            im.addEnchant(enchant, enchantLevel, true);
-
-            // If set, hide enchant flag
-            if(NFCConfig.NOTE_GLINT_HIDE_ENCHANTMENT_FLAG.getBoolean()){
-                im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            // Parse lore
+            List<String> loreList = new ArrayList<>();
+            for (String s : lore) {
+                loreList.add(Utils.parseMessage(s).replace("{money}", formattedMoney).replace("{issuer}", playername));
             }
+            im.setLore(loreList);
+
+            // Note value is stored as an Attribute
+            im.addAttributeModifier(Attribute.GENERIC_LUCK, new AttributeModifier(UUID.fromString(identifier), "noteValue", money, AttributeModifier.Operation.ADD_NUMBER));
+            im.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+
+            // Glint
+            if (NFCConfig.NOTE_GLINT_ENABLED.getBoolean()) {
+                Enchantment enchant = Enchantment.getByKey(NamespacedKey.minecraft(NFCConfig.NOTE_GLINT_ENCHANTMENT.getString().toLowerCase()));
+                int enchantLevel = NFCConfig.NOTE_GLINT_ENCHANTMENT_LEVEL.getInt();
+                im.addEnchant(enchant, enchantLevel, true);
+
+                // If set, hide enchant flag
+                if (NFCConfig.NOTE_GLINT_HIDE_ENCHANTMENT_FLAG.getBoolean()) {
+                    im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                }
+            }
+
+            // Custom Model Data for texture packs
+            im.setCustomModelData(NFCConfig.NOTE_CUSTOM_MODEL_DATA_INTEGER.getInt());
+
+            // Set ItemMeta
+            is.setItemMeta(im);
+            stacks.add(is);
+            remaining -= stackSize;
         }
 
-        // Custom Model Data for texture packs
-        im.setCustomModelData(NFCConfig.NOTE_CUSTOM_MODEL_DATA_INTEGER.getInt());
-
-        // Set ItemMeta
-        is.setItemMeta(im);
-        return is;
+        return stacks.toArray(new ItemStack[0]);
     }
 
     public static boolean isNFCNote(ItemStack itemStack){

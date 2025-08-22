@@ -125,8 +125,10 @@ public class CreateNote implements CommandExecutor, TabExecutor {
         decimalFormat.setMaximumFractionDigits(2);
         String formattedMoney = decimalFormat.format(m);
         // Create the note and give it to the player
-        ItemStack paper = NFCNote.createNFCNoteItem(NFCConfig.NOTE_UUID.getString(), NFCConfig.NOTE_NAME.getString(), NFCConfig.NOTE_LORE.getList(), NFCConfig.NOTE_MATERIAL.getString(), p.getName(), decimalFormat, m, a);
-        p.getInventory().addItem(paper);
+        ItemStack[] papers = NFCNote.createNFCNoteItem(NFCConfig.NOTE_UUID.getString(), NFCConfig.NOTE_NAME.getString(), NFCConfig.NOTE_LORE.getList(), NFCConfig.NOTE_MATERIAL.getString(), p.getName(), decimalFormat, m, a);
+        for (ItemStack paper : papers) {
+            p.getInventory().addItem(paper);
+        }
         p.sendMessage(NFCMessages.CREATENOTE_SUCCESSFUL.getString().replace("{money}", formattedMoney));
     }
 
