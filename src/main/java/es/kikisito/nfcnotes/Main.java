@@ -59,6 +59,7 @@ public class Main extends JavaPlugin implements Listener {
         config = this.getConfig();
         NFCConfig.setConfig(config);
         NFCMessages.setMessagesFile(messages);
+        NFCNote.init(this);
 
         if(NFCConfig.UPDATE_CHECKER_IS_ENABLED.getBoolean()) {
             new UpdateChecker(this).getVersion((version) -> {
